@@ -1,0 +1,1 @@
+{"name":"thread-journey","version":"1.0.0","private":true,"type":"module","scripts":{"dev":"vite --host 0.0.0.0","build":"vite build","check":"svelte-check --tsconfig ./jsconfig.json"},"dependencies":{"svelte":"^5.0.0"},"devDependencies":{"@sveltejs/vite-plugin-svelte":"^5.0.0","vite":"^6.0.0","svelte-check":"^4.0.0","typescript":"^5.0.0"}}
