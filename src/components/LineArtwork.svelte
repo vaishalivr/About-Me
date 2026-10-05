@@ -23,8 +23,8 @@
         return (isX ? point(Number(value), 490)[0] : point(520, Number(value))[1]).toFixed(3);
       });
       const [entryX] = point(260, 490);
-      const [exitHandleX, exitHandleY] = point(scribbleExit[0], scribbleExit[1] + 60);
-      artworkPath = `M -30 490 C 90 490 ${entryX - 80} 490 ${entryX} 490 ${transformed} C ${exitHandleX} ${exitHandleY} 815 510 880 490 ${landscapePath}`;
+      const [exitHandleX, exitHandleY] = point(scribbleExit[0], scribbleExit[1] + 80);
+      artworkPath = `M -30 490 C 90 490 ${entryX - 80} 490 ${entryX} 490 ${transformed} C ${exitHandleX} ${exitHandleY} 1020 525 1190 490 ${landscapePath}`;
     };
     const observer = new ResizeObserver(measure);
     observer.observe(svg);

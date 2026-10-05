@@ -53,4 +53,5 @@ export const tangleLoops = `
  C 670 575 425 620 380 455 C 335 310 610 275 650 395 C 690 510 615 565 470 540 C 335 515 415 295 565 310 C 685 325 700 385 700 470
  C 700 575 545 640 425 570 C 300 500 390 315 535 335 C 710 355 615 635 465 555 C 335 485 420 290 580 325 C 675 345 690 390 690 470`;
 export const scribblePath = baseScribble + tangleLoops + extraLoops;
-export const landscapePath = linePath.slice(linePath.indexOf(' C 925'));
+// The exit bridge now joins at (1190,490), matching the next tangent.
+export const landscapePath = linePath.slice(linePath.indexOf(' C 1360'));
