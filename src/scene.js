@@ -28,3 +28,16 @@ export const linePath = `M -30 490 C 90 490 180 490 260 490
  C 4350 395 4330 670 4530 635 C 4750 595 4750 340 4910 375
  C 5100 410 5040 550 5250 510 C 5450 475 5550 490 5700 490
  C 5840 490 5900 490 5970 490`;
+
+// Scribble changes are isolated from the rest of the landscape.
+export const scribbleSettings = { shiftX: 80, extraDiameterRem: 3, delayMs: 30, durationMs: 3000 };
+// Six additional explicit loops, each returning to the same join (590, 400).
+export const extraLoops = `
+ C 690 310 700 560 545 585 C 365 615 345 340 505 325 C 570 320 610 360 590 400
+ C 665 350 710 505 600 570 C 440 665 335 410 455 350 C 520 315 620 335 590 400
+ C 675 390 640 600 480 570 C 340 540 400 295 555 330 C 625 345 635 385 590 400
+ C 720 340 705 595 525 600 C 360 600 345 330 515 315 C 600 310 635 365 590 400
+ C 650 315 725 510 575 590 C 410 660 345 380 485 340 C 560 315 615 345 590 400
+ C 700 400 635 625 465 560 C 330 500 435 285 585 345 C 630 370 620 395 590 400`;
+export const scribblePath = linePath.slice(linePath.indexOf(' C 340'), linePath.indexOf(' C 685 455')) + extraLoops;
+export const landscapePath = linePath.slice(linePath.indexOf(' C 925'));

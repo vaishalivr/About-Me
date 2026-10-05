@@ -50,7 +50,7 @@
 <section bind:this={section} class:still style:height={still ? 'auto' : `${distance + viewportHeight}px`} aria-label="Follow a continuous thread through a horizontal landscape">
   <div class="viewport">
     <header><a class="brand" href="#start" aria-label="Thread, return to beginning">thread<span>®</span></a><span class="edition">AN EXPLORATION IN ONE LINE</span><button onclick={() => manualStill = !still} aria-pressed={still}>{still ? 'Scroll experience' : 'Still view'} <span aria-hidden="true">↗</span></button></header>
-    <div class="opening-note" style:opacity={still ? 1 : Math.max(0, 1 - travel / (viewportWidth * .35))}><span class="tiny">A BEGINNING, OF SORTS</span><h1>It starts with<br/>a little chaos.</h1></div>
+    <div class="opening-note" style:opacity={still ? 1 : Math.max(0, 1 - travel / (viewportWidth * .35))}><span class="tiny">A BEGINNING, OF SORTS</span><h1>It always starts<br/>with a scribble.</h1></div>
     <div class="composition" style:width={still ? '100%' : `${compositionWidth}px`} style:transform={still ? 'none' : `translate3d(${-travel}px,0,0)`}>
       <LineArtwork width={scene.width} height={scene.height} />
       {#if !still}<SceneItems {items} {scene} scaleX={compositionWidth / scene.width} {viewportWidth} {travel} reducedMotion={still} />{/if}

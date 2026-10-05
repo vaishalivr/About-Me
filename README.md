@@ -8,7 +8,7 @@ A Svelte 5 + Vite horizontal storytelling experience.
 
 ## Edit the journey
 
-- **Line and scribble:** `src/scene.js`, `linePath`. One explicit SVG path makes the joins continuous. Coordinates are in the shared 6000 × 900 scene. No random generation or drawing animation.
+- **Line and scribble:** `src/scene.js`, `linePath`. One explicit SVG path makes the joins continuous. Coordinates are in the shared 6000 × 900 scene. No random generation. Six extra loops are editable in `extraLoops`. `scribbleSettings.shiftX` moves the center by 80 SVG units; `extraDiameterRem` adds 3rem to both visual dimensions, converted using the current SVG scale. `delayMs` (30) and `durationMs` (3000) control the independent load-time drawing animation. Reduced motion skips it.
 - **Composition length:** `scene.width` and `scene.minimumScreens` in that same file. The latter guarantees five screens (four complete viewport lengths of travel). If you change the artwork coordinate width, also update its final endpoint in `LineArtwork.svelte`.
 - **Text positions:** `scene.items` uses `id`, `x`, and `y` in SVG scene coordinates. Both HTML and SVG use the same proportional placement.
 - **Reveal timing:** each item's `reveal.start` and `reveal.end` are viewport fractions: 0.94 begins as the anchor enters near the right edge; 0.66 completes farther inside. `offsetRem` controls the upward entrance distance. Opacity and movement derive directly from scroll position, so scrolling back reverses them.
