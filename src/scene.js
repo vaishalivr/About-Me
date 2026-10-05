@@ -31,16 +31,18 @@ export const linePath = `M -30 490 C 90 490 180 490 260 490
 
 // Scribble changes are isolated from the rest of the landscape.
 export const scribbleSettings = { shiftX: 80, extraDiameterRem: 3, delayMs: 30, durationMs: 3000 };
-// Six explicit loops with gently staggered joins and matching tangent handles.
-// Each join has incoming/outgoing handles of (-60,-50)/(+60,+50),
-// avoiding a cusp or a repeated knot in the upper-right quadrant.
+// Six complete oval passes. Their joins lie on the outer right edge,
+// with vertical tangents, rather than returning to an interior pinch point.
 export const extraLoops = `
- C 650 450 700 560 545 585 C 365 615 345 340 505 325 C 570 320 540 360 600 410
- C 660 460 710 505 600 570 C 440 665 335 410 455 350 C 520 315 550 370 610 420
- C 670 470 640 600 480 570 C 340 540 400 295 555 330 C 625 345 540 365 600 415
- C 660 465 705 595 525 600 C 360 600 345 330 515 315 C 600 310 525 350 585 400
- C 645 450 725 510 575 590 C 410 660 345 380 485 340 C 560 315 535 355 595 405
- C 655 455 635 625 465 560 C 330 500 435 285 585 345 C 630 370 550 360 610 410`;
-export const scribbleExit = [610, 410];
-export const scribblePath = linePath.slice(linePath.indexOf(' C 340'), linePath.indexOf(' C 685 455')) + extraLoops;
+ C 690 560 610 620 520 620 C 430 620 350 560 350 470 C 350 380 430 320 520 320 C 610 320 695 380 695 470
+ C 695 565 615 625 520 625 C 425 625 345 565 345 470 C 345 375 425 315 520 315 C 615 315 700 375 700 470
+ C 700 558 608 618 520 618 C 432 618 355 558 355 470 C 355 382 432 325 520 325 C 608 325 690 382 690 470
+ C 690 568 618 630 520 630 C 422 630 340 568 340 470 C 340 372 422 310 520 310 C 618 310 705 372 705 470
+ C 705 562 612 622 520 622 C 428 622 348 562 348 470 C 348 378 428 318 520 318 C 612 318 698 378 698 470
+ C 698 566 616 627 520 627 C 424 627 343 566 343 470 C 343 374 424 313 520 313 C 616 313 710 374 710 470`;
+export const scribbleExit = [710, 470];
+// A single tangent-continuous transition reaches the outer edge before
+// the new oval passes begin; no loop returns to the former interior join.
+export const scribblePath = linePath.slice(linePath.indexOf(' C 340'), linePath.indexOf(' C 685 455'))
+  + ' C 650 450 690 430 690 470' + extraLoops;
 export const landscapePath = linePath.slice(linePath.indexOf(' C 925'));
