@@ -3,6 +3,7 @@ export const scene = {
   width: 6000,
   height: 900,
   minimumScreens: 5, // start + four full viewport widths of horizontal travel
+  scrollDistanceMultiplier: 1.5, // 50% more vertical travel; no easing lag
   showPlaceholders: true,
   items: [
     { id: 'possibility', x: 1850, y: 250, eyebrow: '01 / UNRAVEL', title: 'Every thought\nstarts somewhere.', body: 'A little chaos. A single thread. A way forward.', reveal: { start: 0.94, end: 0.66, offsetRem: 1.2 } },
@@ -30,7 +31,7 @@ export const linePath = `M -30 490 C 90 490 180 490 260 490
  C 5840 490 5900 490 5970 490`;
 
 // Scribble changes are isolated from the rest of the landscape.
-export const scribbleSettings = { shiftX: 80, extraDiameterRem: 3, delayMs: 30, durationMs: 3000 };
+export const scribbleSettings = { shiftX: 120, extraDiameterRem: 3, delayMs: 30, durationMs: 3000 };
 // Six complete oval passes. Their joins lie on the outer right edge,
 // with vertical tangents, rather than returning to an interior pinch point.
 export const extraLoops = `
@@ -41,8 +42,18 @@ export const extraLoops = `
  C 705 562 612 622 520 622 C 428 622 348 562 348 470 C 348 378 428 318 520 318 C 612 318 698 378 698 470
  C 698 566 616 627 520 627 C 424 627 343 566 343 470 C 343 374 424 313 520 313 C 616 313 710 374 710 470`;
 export const scribbleExit = [710, 470];
-// A single tangent-continuous transition reaches the outer edge before
-// the new oval passes begin; no loop returns to the former interior join.
-export const scribblePath = linePath.slice(linePath.indexOf(' C 340'), linePath.indexOf(' C 685 455'))
-  + ' C 650 450 690 430 690 470' + extraLoops;
+// Outer oval passes replace the former inward hook completely.
+// These are explicit editable coordinates, never randomized.
+export const baseScribble = ` C 350 490 350 480 350 470
+ C 350 375 430 305 520 305 C 610 305 690 375 690 470 C 690 565 610 625 520 625 C 430 625 350 565 350 470
+ C 350 375 430 320 520 320 C 610 320 675 375 675 470 C 675 565 610 610 520 610 C 430 610 365 565 365 470
+ C 365 375 430 295 520 295 C 610 295 705 375 705 470 C 705 565 610 635 520 635 C 430 635 340 565 340 470
+ C 340 375 430 330 520 330 C 610 330 665 375 665 470 C 665 565 610 600 520 600 C 430 600 375 565 375 470
+ C 375 375 430 310 520 310 C 610 310 695 375 695 470 C 695 565 610 620 520 620 C 430 620 355 565 355 470
+ C 355 375 430 300 520 300 C 610 300 700 375 700 470 C 700 565 610 630 520 630 C 430 630 345 565 345 470
+ C 345 375 430 315 520 315 C 610 315 680 375 680 470 C 680 565 610 615 520 615 C 430 615 370 565 370 470
+ C 370 375 430 307 520 307 C 610 307 688 375 688 470 C 688 565 610 623 520 623 C 430 623 360 565 360 470
+ C 360 375 430 305 520 305 C 610 305 690 375 690 470 C 690 565 610 625 520 625 C 430 625 350 565 350 470
+ C 350 375 430 305 520 305 C 610 305 690 375 690 470`;
+export const scribblePath = baseScribble + extraLoops;
 export const landscapePath = linePath.slice(linePath.indexOf(' C 925'));

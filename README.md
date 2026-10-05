@@ -8,7 +8,7 @@ A Svelte 5 + Vite horizontal storytelling experience.
 
 ## Edit the journey
 
-- **Line and scribble:** `src/scene.js`, `linePath`. One explicit SVG path makes the joins continuous. Coordinates are in the shared 6000 × 900 scene. No random generation. Six extra loops are editable in `extraLoops`. `scribbleSettings.shiftX` moves the center by 80 SVG units; `extraDiameterRem` adds 3rem to both visual dimensions, converted using the current SVG scale. `delayMs` (30) and `durationMs` (3000) control the independent load-time drawing animation. Reduced motion skips it.
+- **Line and scribble:** `src/scene.js`, `baseScribble`, `extraLoops`, and `landscapePath`. One explicit SVG path makes the joins continuous. Coordinates are in the shared 6000 × 900 scene. No random generation. Six extra loops are editable in `extraLoops`. `scribbleSettings.shiftX` moves the center by 120 SVG units; `extraDiameterRem` adds 3rem to both visual dimensions, converted using the current SVG scale. `delayMs` (30) and `durationMs` (3000) control the independent load-time drawing animation. Reduced motion skips it.
 - **Composition length:** `scene.width` and `scene.minimumScreens` in that same file. The latter guarantees five screens (four complete viewport lengths of travel). If you change the artwork coordinate width, also update its final endpoint in `LineArtwork.svelte`.
 - **Text positions:** `scene.items` uses `id`, `x`, and `y` in SVG scene coordinates. Both HTML and SVG use the same proportional placement.
 - **Reveal timing:** each item's `reveal.start` and `reveal.end` are viewport fractions: 0.94 begins as the anchor enters near the right edge; 0.66 completes farther inside. `offsetRem` controls the upward entrance distance. Opacity and movement derive directly from scroll position, so scrolling back reverses them.
@@ -18,7 +18,7 @@ A Svelte 5 + Vite horizontal storytelling experience.
 
 ## Components and behavior
 
-`ScrollJourney.svelte` measures the viewport and composition and pins the scene. Vertical travel is exactly `compositionWidth - viewportWidth`. Its section height is this distance plus the viewport height, placing the start and end correctly. A passive scroll listener schedules a single animation frame; it applies scroll position without easing lag, snapping, or wheel interception. Native touch and keyboard scrolling work. ResizeObserver, resize, and media-query changes recalculate dimensions; all listeners, observers, and pending frames are cleaned up on destruction.
+`ScrollJourney.svelte` measures the viewport and composition and pins the scene. Horizontal travel is exactly `compositionWidth - viewportWidth`; vertical scroll distance is that value times `scene.scrollDistanceMultiplier` (1.5), slowing travel without easing lag. Its section height is this distance times the multiplier plus the viewport height, placing the start and end correctly. A passive scroll listener schedules a single animation frame; it applies scroll position without easing lag, snapping, or wheel interception. Native touch and keyboard scrolling work. ResizeObserver, resize, and media-query changes recalculate dimensions; all listeners, observers, and pending frames are cleaned up on destruction.
 
 `LineArtwork.svelte` renders the fixed SVG artwork with a non-scaling 2px stroke. `SceneItems.svelte` renders real HTML and scroll-based reveals.
 
