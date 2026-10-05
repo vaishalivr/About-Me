@@ -1,12 +1,14 @@
 <script>
-  import { onMount } from 'svelte';
+  import { onMount, tick } from 'svelte';
   import { scribblePath, landscapePath, scribbleSettings, scribbleExit } from '../scene.js';
   export let width;
   export let height;
+  export let onReady = () => {};
   let svg;
   let measurement;
   let artworkPath = '';
   onMount(() => {
+    let alive = true;
     const measure = () => {
       const rect = svg.getBoundingClientRect();
       if (!rect.width || !rect.height) return;
@@ -25,11 +27,12 @@
       const [entryX] = point(260, 490);
       const [exitHandleX, exitHandleY] = point(scribbleExit[0], scribbleExit[1] + 80);
       artworkPath = `M -30 490 C 90 490 ${entryX - 80} 490 ${entryX} 490 ${transformed} C ${exitHandleX} ${exitHandleY} 1020 525 1190 490 ${landscapePath}`;
+      tick().then(() => { if (alive) onReady(); });
     };
     const observer = new ResizeObserver(measure);
     observer.observe(svg);
     measure();
-    return () => observer.disconnect();
+    return () => { alive = false; observer.disconnect(); };
   });
 </script>
 <svg bind:this={svg} viewBox={`0 0 ${width} ${height}`} preserveAspectRatio="none" aria-hidden="true" style:--draw-delay={`${scribbleSettings.delayMs}ms`} style:--draw-duration={`${scribbleSettings.durationMs}ms`}>

@@ -1,63 +1,187 @@
 <script>
-  import { onMount } from 'svelte';
+  import { onMount, tick } from 'svelte';
   import LineArtwork from './LineArtwork.svelte';
   import SceneItems from './SceneItems.svelte';
   import { scene } from '../scene.js';
+  import { clamp, journeyGeometry, openingEase } from '../journey.js';
   let section;
+  let viewport;
   let viewportWidth = 1;
   let viewportHeight = 1;
   let compositionWidth = 6000;
   let distance = 0;
+  let openingEnd = 0;
+  let scrollDistance = 0;
   let travel = 0;
-  $: scrollDistance = distance * scene.scrollDistanceMultiplier;
-  let reducedMotion = false;
-  let manualStill = null;
-  $: still = manualStill ?? reducedMotion;
+  let still = false;
+  let phase = 'waiting';
+  let readyAt = 0;
+  let autoplayStartedAt = 0;
+  let notifyArtworkReady = () => {};
+  let toggleView = () => {};
   $: progress = distance ? travel / distance : 0;
   $: items = scene.showPlaceholders ? scene.items : [];
+
   onMount(() => {
     const preference = window.matchMedia('(prefers-reduced-motion: reduce)');
-    let frame = 0;
-    const update = () => {
-      frame = 0;
-      if (!section) return;
-      travel = Math.max(0, Math.min(distance, -section.getBoundingClientRect().top / scene.scrollDistanceMultiplier));
+    let alive = true;
+    let loaded = document.readyState === 'complete';
+    let artworkReady = false;
+    let consumedOpening = false;
+    let delayTimer;
+    let animationFrame = 0;
+    let scrollFrame = 0;
+    let openingProgress = 0;
+    let scrollAnchor = window.scrollY;
+    let locked = false;
+    let previousOverflow = '';
+    const sectionTop = () => window.scrollY + section.getBoundingClientRect().top;
+    const guarded = () => !still && (phase === 'waiting' || phase === 'opening');
+    const lock = () => {
+      if (locked) return;
+      previousOverflow = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      locked = true;
+      scrollAnchor = sectionTop();
+      window.scrollTo({ top: scrollAnchor, behavior: 'instant' });
     };
-    const schedule = () => { if (!frame) frame = requestAnimationFrame(update); };
+    const unlock = () => {
+      if (!locked) return;
+      document.body.style.overflow = previousOverflow;
+      locked = false;
+    };
+    const cancelOpening = () => {
+      clearTimeout(delayTimer);
+      delayTimer = undefined;
+      cancelAnimationFrame(animationFrame);
+      animationFrame = 0;
+    };
+    const updateScroll = () => {
+      scrollFrame = 0;
+      if (!alive || still) return;
+      if (guarded()) {
+        // Also discard scrollbar/programmatic input rather than bank it.
+        if (Math.abs(window.scrollY - scrollAnchor) > .5) window.scrollTo({ top: scrollAnchor, behavior: 'instant' });
+        return;
+      }
+      travel = openingEnd + clamp((window.scrollY - scrollAnchor) / scene.scrollDistanceMultiplier, 0, distance - openingEnd);
+    };
+    const scheduleScroll = () => { if (!scrollFrame) scrollFrame = requestAnimationFrame(updateScroll); };
+    const completeOpening = () => {
+      consumedOpening = true;
+      openingProgress = 1;
+      travel = openingEnd;
+      // Restore native scrolling only after discarding all input from autoplay.
+      scrollAnchor = sectionTop();
+      window.scrollTo({ top: scrollAnchor, behavior: 'instant' });
+      phase = 'scroll';
+      unlock();
+    };
+    const animate = (now) => {
+      if (!alive || still || phase !== 'opening') return;
+      if (!autoplayStartedAt) autoplayStartedAt = now;
+      openingProgress = clamp((now - autoplayStartedAt) / Math.max(1, scene.opening.durationMs));
+      travel = openingEnd * openingEase(openingProgress);
+      if (openingProgress === 1) completeOpening();
+      else animationFrame = requestAnimationFrame(animate);
+    };
+    const startWhenReady = () => {
+      if (!alive || still || consumedOpening || !loaded || !artworkReady || !distance || delayTimer !== undefined || phase !== 'waiting') return;
+      readyAt = performance.now();
+      delayTimer = setTimeout(() => {
+        delayTimer = undefined;
+        if (!alive || still || consumedOpening) return;
+        phase = 'opening';
+        animationFrame = requestAnimationFrame(animate);
+      }, scene.opening.startDelayMs);
+    };
     const measure = () => {
-      viewportWidth = document.documentElement.clientWidth;
-      viewportHeight = window.innerHeight;
-      // Scale for legibility, then ensure at least four complete scroll lengths.
-      compositionWidth = Math.max(scene.width * Math.max(.55, Math.min(1, viewportHeight / scene.height)), viewportWidth * scene.minimumScreens);
-      distance = compositionWidth - viewportWidth;
-      schedule();
+      const w = document.documentElement.clientWidth;
+      const h = viewport.getBoundingClientRect().height;
+      if (w === viewportWidth && h === viewportHeight && distance) return;
+      const remainingFraction = clamp((travel - openingEnd) / Math.max(1, distance - openingEnd));
+      viewportWidth = w;
+      viewportHeight = h;
+      ({ compositionWidth, distance, openingEnd, scrollDistance } = journeyGeometry(scene, w, h));
+      if (phase === 'opening') travel = openingEnd * openingEase(openingProgress);
+      else if (phase === 'scroll') travel = openingEnd + remainingFraction * (distance - openingEnd);
+      tick().then(() => {
+        if (!alive) return;
+        if (!still && phase === 'scroll') {
+          scrollAnchor = sectionTop();
+          window.scrollTo({ top: scrollAnchor + remainingFraction * scrollDistance, behavior: 'instant' });
+        }
+        startWhenReady();
+      });
     };
-    const motion = () => { reducedMotion = preference.matches; measure(); };
+    const setView = (value) => {
+      still = value;
+      if (still) {
+        cancelOpening();
+        consumedOpening = true;
+        phase = 'still';
+        unlock();
+      } else {
+        // Returning from the accessible overview never replays the opening.
+        phase = 'scroll';
+        travel = openingEnd;
+        tick().then(() => {
+          if (!alive || still || phase !== 'scroll') return;
+          measure();
+          scrollAnchor = sectionTop();
+          window.scrollTo({ top: scrollAnchor, behavior: 'instant' });
+        });
+      }
+    };
+    toggleView = () => setView(!still);
+    const motionChange = () => setView(preference.matches);
+    const onLoad = () => { loaded = true; startWhenReady(); };
+    notifyArtworkReady = () => { artworkReady = true; startWhenReady(); };
+    const preventInput = (event) => { if (guarded()) event.preventDefault(); };
+    const preventScrollKeys = (event) => {
+      const tag = event.target?.tagName;
+      if (['BUTTON', 'INPUT', 'TEXTAREA', 'SELECT'].includes(tag) || event.target?.isContentEditable) return;
+      if (['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'Home', 'End', ' '].includes(event.key)) preventInput(event);
+    };
+    still = preference.matches;
+    if (still) { consumedOpening = true; phase = 'still'; }
+    else lock();
     const observer = new ResizeObserver(measure);
-    observer.observe(document.documentElement);
-    window.addEventListener('scroll', schedule, { passive: true });
+    observer.observe(viewport);
+    window.addEventListener('load', onLoad);
+    window.addEventListener('scroll', scheduleScroll, { passive: true });
     window.addEventListener('resize', measure);
-    preference.addEventListener('change', motion);
-    motion();
+    window.addEventListener('wheel', preventInput, { passive: false });
+    window.addEventListener('touchmove', preventInput, { passive: false });
+    window.addEventListener('keydown', preventScrollKeys);
+    preference.addEventListener('change', motionChange);
+    measure();
     return () => {
-      cancelAnimationFrame(frame);
+      alive = false;
+      cancelOpening();
+      cancelAnimationFrame(scrollFrame);
       observer.disconnect();
-      window.removeEventListener('scroll', schedule);
+      unlock();
+      window.removeEventListener('load', onLoad);
+      window.removeEventListener('scroll', scheduleScroll);
       window.removeEventListener('resize', measure);
-      preference.removeEventListener('change', motion);
+      window.removeEventListener('wheel', preventInput);
+      window.removeEventListener('touchmove', preventInput);
+      window.removeEventListener('keydown', preventScrollKeys);
+      preference.removeEventListener('change', motionChange);
     };
   });
 </script>
-<section bind:this={section} class:still style:height={still ? 'auto' : `${scrollDistance + viewportHeight}px`} aria-label="Follow a continuous thread through a horizontal landscape">
-  <div class="viewport">
-    <header><button onclick={() => manualStill = !still} aria-pressed={still}>{still ? 'Scroll experience' : 'Still view'} <span aria-hidden="true">↗</span></button></header>
+<section bind:this={section} data-phase={phase} data-opening-end={openingEnd} data-ready-at={readyAt} data-autoplay-started-at={autoplayStartedAt} class:still style:height={still ? 'auto' : `${scrollDistance + viewportHeight}px`} aria-label="Follow a continuous thread through a horizontal landscape">
+  <div bind:this={viewport} class="viewport">
+    <header><button onclick={() => toggleView()} aria-pressed={still}>{still ? 'Scroll experience' : 'Still view'} <span aria-hidden="true">↗</span></button></header>
     <div class="opening-note" style:opacity={still ? 1 : Math.max(0, 1 - travel / (viewportWidth * .35))}><h1>It always starts<br/>with a scribble.</h1></div>
     <div class="composition" style:width={still ? '100%' : `${compositionWidth}px`} style:transform={still ? 'none' : `translate3d(${-travel}px,0,0)`}>
-      <LineArtwork width={scene.width} height={scene.height} />
+      <LineArtwork width={scene.width} height={scene.height} onReady={() => notifyArtworkReady()} />
       {#if !still}<SceneItems {items} {scene} scaleX={compositionWidth / scene.width} {viewportWidth} {travel} reducedMotion={still} />{/if}
     </div>
     {#if still}<div class="reading"><p class="tiny">THE JOURNEY · STILL VIEW</p>{#each items as item (item.id)}<article><p class="tiny">{item.eyebrow}</p><h2>{item.title}</h2><p>{item.body}</p></article>{/each}</div>{/if}
-    <footer><div class="scroll-cue"><span aria-hidden="true">↓</span><span>{still ? 'TAKE YOUR TIME' : progress > .99 ? 'YOU’VE FOLLOWED THE THREAD' : 'SCROLL TO FOLLOW THE THREAD'}</span></div><div class="progress" aria-hidden="true"><span class="number">{String(Math.min(4, Math.floor(progress * 4)) + 1).padStart(2, '0')}</span><span class="rail"><span style:width={`${progress * 100}%`}></span></span><span class="total">05</span></div></footer>
+    <footer><div class="scroll-cue"><span aria-hidden="true">↓</span><span>{still ? 'TAKE YOUR TIME' : phase !== 'scroll' ? 'FOLLOWING THE THREAD' : progress > .99 ? 'YOU’VE FOLLOWED THE THREAD' : 'SCROLL TO FOLLOW THE THREAD'}</span></div><div class="progress" aria-hidden="true"><span class="number">{String(Math.min(4, Math.floor(progress * 4)) + 1).padStart(2, '0')}</span><span class="rail"><span style:width={`${progress * 100}%`}></span></span><span class="total">05</span></div></footer>
   </div>
 </section>
 <style>

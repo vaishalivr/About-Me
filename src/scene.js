@@ -4,6 +4,12 @@ export const scene = {
   height: 900,
   minimumScreens: 5, // start + four full viewport widths of horizontal travel
   scrollDistanceMultiplier: 1.5, // 50% more vertical travel; no easing lag
+  opening: {
+    startDelayMs: 30, // measured from loaded + mounted + measured artwork readiness
+    durationMs: 5000,
+    endpointX: 1190, // SVG coordinate just beyond the scribble exit bridge
+    viewportAnchor: 0.25 // endpoint appears one quarter of the viewport from the left
+  },
   showPlaceholders: true,
   items: [
     { id: 'possibility', x: 1850, y: 250, eyebrow: '01 / UNRAVEL', title: 'Every thought\nstarts somewhere.', body: 'A little chaos. A single thread. A way forward.', reveal: { start: 0.94, end: 0.66, offsetRem: 1.2 } },
@@ -32,18 +38,16 @@ export const linePath = `M -30 490 C 90 490 180 490 260 490
 
 // Scribble changes are isolated from the rest of the landscape.
 export const scribbleSettings = { shiftX: 120, extraDiameterRem: 3, delayMs: 30, durationMs: 3000 };
-// Six complete oval passes. Their joins lie on the outer right edge,
-// with vertical tangents, rather than returning to an interior pinch point.
+// Retained original oval passes 1, 4, and 6. Exactly passes 2, 3,
+// and 5 were removed; the uneven base and added tangles remain intact.
+// These retained passes preserve the outer bounds and final exit point.
 export const extraLoops = `
  C 690 560 610 620 520 620 C 430 620 350 560 350 470 C 350 380 430 320 520 320 C 610 320 695 380 695 470
- C 695 565 615 625 520 625 C 425 625 345 565 345 470 C 345 375 425 315 520 315 C 615 315 700 375 700 470
- C 700 558 608 618 520 618 C 432 618 355 558 355 470 C 355 382 432 325 520 325 C 608 325 690 382 690 470
- C 690 568 618 630 520 630 C 422 630 340 568 340 470 C 340 372 422 310 520 310 C 618 310 705 372 705 470
- C 705 562 612 622 520 622 C 428 622 348 562 348 470 C 348 378 428 318 520 318 C 612 318 698 378 698 470
- C 698 566 616 627 520 627 C 424 627 343 566 343 470 C 343 374 424 313 520 313 C 616 313 710 374 710 470`;
+ C 695 568 618 630 520 630 C 422 630 340 568 340 470 C 340 372 422 310 520 310 C 618 310 705 372 705 470
+ C 705 566 616 627 520 627 C 424 627 343 566 343 470 C 343 374 424 313 520 313 C 616 313 710 374 710 470`;
 export const scribbleExit = [710, 470];
 // Preserve the original uneven, tangled passes. Only the final inward
-// hook is removed; its replacement follows the outside into the six loops.
+// hook is removed; its replacement follows the outside into the three retained oval loops.
 export const baseScribble = linePath.slice(linePath.indexOf(' C 340'), linePath.indexOf(' C 345 455'))
   + ' C 370 490 360 350 520 310 C 610 290 690 375 690 470';
 // Three uneven crossing passes add a little more hand-drawn density.
