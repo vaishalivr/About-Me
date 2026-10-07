@@ -4,17 +4,36 @@ export const scene = {
   height: 900,
   minimumScreens: 5, // start + four full viewport widths of horizontal travel
   scrollDistanceMultiplier: 1.5, // 50% more vertical travel; no easing lag
-  opening: {
-    startDelayMs: 30, // measured from loaded + mounted + measured artwork readiness
-    durationMs: 5000,
-    endpointX: 1190, // SVG coordinate just beyond the scribble exit bridge
-    viewportAnchor: 0.25 // endpoint appears one quarter of the viewport from the left
-  },
+  // Fractions from 0 to 1: scroll position → visible portion of the line AFTER the scribble.
+  // Edit `visible` independently at each stop; add stops in increasing scroll order.
+  lineRevealStops: [
+    { scroll: 0, visible: 0 },
+    { scroll: 0.25, visible: 0.25 },
+    { scroll: 0.5, visible: 0.5 },
+    { scroll: 0.75, visible: 0.75 },
+    { scroll: 1, visible: 1 },
+  ],
   showPlaceholders: true,
   items: [
-    { id: 'possibility', x: 1850, y: 250, eyebrow: '01 / UNRAVEL', title: 'Every thought\nstarts somewhere.', body: 'A little chaos. A single thread. A way forward.', reveal: { start: 0.94, end: 0.66, offsetRem: 1.2 } },
-    { id: 'perspective', x: 4100, y: 570, eyebrow: '02 / WANDER', title: 'Follow the unexpected.', body: 'There is no straight line from here to there.', reveal: { start: 0.94, end: 0.66, offsetRem: 1.2 } }
-  ]
+    {
+      id: "possibility",
+      x: 1850,
+      y: 250,
+      eyebrow: "01 / UNRAVEL",
+      title: "Every thought\nstarts somewhere.",
+      body: "A little chaos. A single thread. A way forward.",
+      reveal: { start: 0.94, end: 0.66, offsetRem: 1.2 },
+    },
+    {
+      id: "perspective",
+      x: 4100,
+      y: 570,
+      eyebrow: "02 / WANDER",
+      title: "Follow the unexpected.",
+      body: "There is no straight line from here to there.",
+      reveal: { start: 0.94, end: 0.66, offsetRem: 1.2 },
+    },
+  ],
 };
 // One explicit continuous path. Edit these Bézier coordinates freely.
 export const linePath = `M -30 490 C 90 490 180 490 260 490
@@ -37,25 +56,24 @@ export const linePath = `M -30 490 C 90 490 180 490 260 490
  C 5840 490 5900 490 5970 490`;
 
 // Scribble changes are isolated from the rest of the landscape.
-export const scribbleSettings = { shiftX: 120, extraDiameterRem: 3, delayMs: 30, durationMs: 3000 };
-// Retained original oval passes 1, 4, and 6. Exactly passes 2, 3,
-// and 5 were removed; the uneven base and added tangles remain intact.
-// These retained passes preserve the outer bounds and final exit point.
-export const extraLoops = `
- C 690 560 610 620 520 620 C 430 620 350 560 350 470 C 350 380 430 320 520 320 C 610 320 695 380 695 470
- C 695 568 618 630 520 630 C 422 630 340 568 340 470 C 340 372 422 310 520 310 C 618 310 705 372 705 470
- C 705 566 616 627 520 627 C 424 627 343 566 343 470 C 343 374 424 313 520 313 C 616 313 710 374 710 470`;
-export const scribbleExit = [710, 470];
+export const scribbleSettings = {
+  shiftX: 270,
+  extraDiameterRem: 3,
+  delayMs: 300,
+  durationMs: 6000,
+};
+export const scribbleExit = [690, 470];
 // Preserve the original uneven, tangled passes. Only the final inward
-// hook is removed; its replacement follows the outside into the three retained oval loops.
-export const baseScribble = linePath.slice(linePath.indexOf(' C 340'), linePath.indexOf(' C 345 455'))
-  + ' C 370 490 360 350 520 310 C 610 290 690 375 690 470';
+// hook is removed; its replacement follows the outside into the crossing passes.
+export const baseScribble =
+  linePath.slice(linePath.indexOf(" C 340"), linePath.indexOf(" C 345 455")) +
+  " C 370 490 360 350 520 310 C 610 290 690 375 690 470";
 // Three uneven crossing passes add a little more hand-drawn density.
 // Joins stay on the outside with downward tangents to avoid the old hook.
 export const tangleLoops = `
  C 690 560 480 660 395 535 C 315 420 425 290 570 330 C 705 370 670 380 670 470
  C 670 575 425 620 380 455 C 335 310 610 275 650 395 C 690 510 615 565 470 540 C 335 515 415 295 565 310 C 685 325 700 385 700 470
  C 700 575 545 640 425 570 C 300 500 390 315 535 335 C 710 355 615 635 465 555 C 335 485 420 290 580 325 C 675 345 690 390 690 470`;
-export const scribblePath = baseScribble + tangleLoops + extraLoops;
+export const scribblePath = baseScribble + tangleLoops;
 // The exit bridge now joins at (1190,490), matching the next tangent.
-export const landscapePath = linePath.slice(linePath.indexOf(' C 1360'));
+export const landscapePath = linePath.slice(linePath.indexOf(" C 1360"));
