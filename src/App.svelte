@@ -6,6 +6,7 @@
     initialRevealDelayMs: 250,
     initialRevealDurationMs: 1200,
     completionDurationMs: 800,
+    shrinkDurationMs: 400,
   };
 
   const totalLineLength = 7000;
@@ -39,22 +40,38 @@
   }
 
   function syncRevealFromScroll() {
-    if (!app) return;
+    if (!app || completionActive) return;
 
-    const scrollBasedReveal = app.scrollLeft + thresholdWidth;
-    revealWidth = clamp(scrollBasedReveal, 0, totalLineLength);
-
-    // If the user has scrolled all the way to the horizontal end, animate the
-    // completion from the current reveal to the full line length.
     const atScrollEnd = app.scrollLeft + app.clientWidth >= app.scrollWidth - 1;
-    if (
-      atScrollEnd &&
-      revealWidth < totalLineLength &&
-      !completionActive &&
-      !completionDone
-    ) {
-      stopAutoReveal();
-      beginCompletionAnimation();
+    if (completionDone && !atScrollEnd) {
+      completionDone = false;
+    }
+
+    if (atScrollEnd) {
+      const startValue = clamp(
+        revealWidth || thresholdWidth,
+        0,
+        totalLineLength,
+      );
+      if (startValue < totalLineLength) {
+        stopAutoReveal();
+        beginCompletionAnimation(startValue);
+      }
+      return;
+    }
+
+    const targetReveal = clamp(
+      app.scrollLeft + thresholdWidth,
+      0,
+      totalLineLength,
+    );
+
+    // If the reveal needs to shrink (reverse scroll), animate the transition
+    if (targetReveal < revealWidth) {
+      beginRevealTransition(targetReveal);
+    } else {
+      // Growing reveal follows scroll position immediately
+      revealWidth = clamp(targetReveal, 0, totalLineLength);
     }
   }
 
@@ -104,12 +121,12 @@
     animationFrameId = requestAnimationFrame(animate);
   }
 
-  function beginCompletionAnimation() {
+  function beginCompletionAnimation(startValue) {
     if (completionDone || completionActive) return;
 
+    const from = clamp(startValue ?? thresholdWidth, 0, totalLineLength);
     completionActive = true;
     const start = performance.now();
-    const from = revealWidth;
     const to = totalLineLength;
     const duration = lineConfig.completionDurationMs;
 
@@ -131,6 +148,41 @@
       animationFrameId = requestAnimationFrame(step);
     };
 
+    if (animationFrameId) {
+      cancelAnimationFrame(animationFrameId);
+    }
+    animationFrameId = requestAnimationFrame(step);
+  }
+
+  function beginRevealTransition(
+    toValue,
+    durationMs = lineConfig.shrinkDurationMs,
+  ) {
+    const from = clamp(revealWidth ?? 0, 0, totalLineLength);
+    const to = clamp(toValue, 0, totalLineLength);
+
+    if (from === to) return;
+
+    if (animationFrameId) {
+      cancelAnimationFrame(animationFrameId);
+      animationFrameId = null;
+    }
+
+    const start = performance.now();
+
+    const step = (now) => {
+      const t = clamp((now - start) / durationMs, 0, 1);
+      const eased = 1 - Math.pow(1 - t, 3);
+      revealWidth = clamp(from + (to - from) * eased, 0, totalLineLength);
+
+      if (t >= 1) {
+        animationFrameId = null;
+        return;
+      }
+
+      animationFrameId = requestAnimationFrame(step);
+    };
+
     animationFrameId = requestAnimationFrame(step);
   }
 
@@ -140,6 +192,7 @@
     event.preventDefault();
     app.scrollLeft += event.deltaY;
     userHasScrolled = true;
+    completionDone = false;
     stopAutoReveal();
     stopCompletion();
     syncRevealFromScroll();
