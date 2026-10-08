@@ -5,6 +5,7 @@
     revealRatio: 2 / 3,
     initialRevealDelayMs: 250,
     initialRevealDurationMs: 1200,
+    completionDurationMs: 800,
   };
 
   const totalLineLength = 7000;
@@ -13,6 +14,8 @@
   let revealWidth = 0;
   let thresholdWidth = 0;
   let autoRevealActive = false;
+  let completionActive = false;
+  let completionDone = false;
   let userHasScrolled = false;
   let animationFrameId = null;
   let loadTimerId = null;
@@ -25,6 +28,11 @@
     const viewportWidth = app ? app.clientWidth : window.innerWidth;
     thresholdWidth = viewportWidth * lineConfig.revealRatio;
 
+    if (completionDone) {
+      revealWidth = totalLineLength;
+      return;
+    }
+
     if (!userHasScrolled && !autoRevealActive) {
       revealWidth = clamp(thresholdWidth, 0, totalLineLength);
     }
@@ -35,11 +43,32 @@
 
     const scrollBasedReveal = app.scrollLeft + thresholdWidth;
     revealWidth = clamp(scrollBasedReveal, 0, totalLineLength);
+
+    // If the user has scrolled all the way to the horizontal end, animate the
+    // completion from the current reveal to the full line length.
+    const atScrollEnd = app.scrollLeft + app.clientWidth >= app.scrollWidth - 1;
+    if (
+      atScrollEnd &&
+      revealWidth < totalLineLength &&
+      !completionActive &&
+      !completionDone
+    ) {
+      stopAutoReveal();
+      beginCompletionAnimation();
+    }
   }
 
   function stopAutoReveal() {
     autoRevealActive = false;
 
+    if (animationFrameId) {
+      cancelAnimationFrame(animationFrameId);
+      animationFrameId = null;
+    }
+  }
+
+  function stopCompletion() {
+    completionActive = false;
     if (animationFrameId) {
       cancelAnimationFrame(animationFrameId);
       animationFrameId = null;
@@ -75,6 +104,36 @@
     animationFrameId = requestAnimationFrame(animate);
   }
 
+  function beginCompletionAnimation() {
+    if (completionDone || completionActive) return;
+
+    completionActive = true;
+    const start = performance.now();
+    const from = revealWidth;
+    const to = totalLineLength;
+    const duration = lineConfig.completionDurationMs;
+
+    const step = (now) => {
+      if (!completionActive) return;
+
+      const t = clamp((now - start) / duration, 0, 1);
+      const eased = 1 - Math.pow(1 - t, 3);
+      revealWidth = clamp(from + (to - from) * eased, 0, totalLineLength);
+
+      if (t >= 1) {
+        completionActive = false;
+        completionDone = true;
+        revealWidth = totalLineLength;
+        animationFrameId = null;
+        return;
+      }
+
+      animationFrameId = requestAnimationFrame(step);
+    };
+
+    animationFrameId = requestAnimationFrame(step);
+  }
+
   function handleWheel(event) {
     if (!app) return;
 
@@ -82,6 +141,7 @@
     app.scrollLeft += event.deltaY;
     userHasScrolled = true;
     stopAutoReveal();
+    stopCompletion();
     syncRevealFromScroll();
   }
 
