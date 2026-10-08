@@ -39,23 +39,24 @@
   }
 
   function syncRevealFromScroll() {
-    if (!app) return;
+    if (!app || completionActive || completionDone) return;
+
+    const atScrollEnd = app.scrollLeft + app.clientWidth >= app.scrollWidth - 1;
+    if (atScrollEnd) {
+      const startValue = clamp(
+        revealWidth || thresholdWidth,
+        0,
+        totalLineLength,
+      );
+      if (startValue < totalLineLength) {
+        stopAutoReveal();
+        beginCompletionAnimation(startValue);
+      }
+      return;
+    }
 
     const scrollBasedReveal = app.scrollLeft + thresholdWidth;
     revealWidth = clamp(scrollBasedReveal, 0, totalLineLength);
-
-    // If the user has scrolled all the way to the horizontal end, animate the
-    // completion from the current reveal to the full line length.
-    const atScrollEnd = app.scrollLeft + app.clientWidth >= app.scrollWidth - 1;
-    if (
-      atScrollEnd &&
-      revealWidth < totalLineLength &&
-      !completionActive &&
-      !completionDone
-    ) {
-      stopAutoReveal();
-      beginCompletionAnimation();
-    }
   }
 
   function stopAutoReveal() {
@@ -104,12 +105,12 @@
     animationFrameId = requestAnimationFrame(animate);
   }
 
-  function beginCompletionAnimation() {
+  function beginCompletionAnimation(startValue) {
     if (completionDone || completionActive) return;
 
+    const from = clamp(startValue ?? thresholdWidth, 0, totalLineLength);
     completionActive = true;
     const start = performance.now();
-    const from = revealWidth;
     const to = totalLineLength;
     const duration = lineConfig.completionDurationMs;
 
@@ -131,6 +132,9 @@
       animationFrameId = requestAnimationFrame(step);
     };
 
+    if (animationFrameId) {
+      cancelAnimationFrame(animationFrameId);
+    }
     animationFrameId = requestAnimationFrame(step);
   }
 
