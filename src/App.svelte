@@ -6,6 +6,7 @@
     initialRevealDelayMs: 250,
     initialRevealDurationMs: 1200,
     completionDurationMs: 800,
+    shrinkDurationMs: 400,
   };
 
   const totalLineLength = 7000;
@@ -39,9 +40,13 @@
   }
 
   function syncRevealFromScroll() {
-    if (!app || completionActive || completionDone) return;
+    if (!app || completionActive) return;
 
     const atScrollEnd = app.scrollLeft + app.clientWidth >= app.scrollWidth - 1;
+    if (completionDone && !atScrollEnd) {
+      completionDone = false;
+    }
+
     if (atScrollEnd) {
       const startValue = clamp(
         revealWidth || thresholdWidth,
@@ -55,8 +60,19 @@
       return;
     }
 
-    const scrollBasedReveal = app.scrollLeft + thresholdWidth;
-    revealWidth = clamp(scrollBasedReveal, 0, totalLineLength);
+    const targetReveal = clamp(
+      app.scrollLeft + thresholdWidth,
+      0,
+      totalLineLength,
+    );
+
+    // If the reveal needs to shrink (reverse scroll), animate the transition
+    if (targetReveal < revealWidth) {
+      beginRevealTransition(targetReveal);
+    } else {
+      // Growing reveal follows scroll position immediately
+      revealWidth = clamp(targetReveal, 0, totalLineLength);
+    }
   }
 
   function stopAutoReveal() {
@@ -138,12 +154,45 @@
     animationFrameId = requestAnimationFrame(step);
   }
 
+  function beginRevealTransition(
+    toValue,
+    durationMs = lineConfig.shrinkDurationMs,
+  ) {
+    const from = clamp(revealWidth ?? 0, 0, totalLineLength);
+    const to = clamp(toValue, 0, totalLineLength);
+
+    if (from === to) return;
+
+    if (animationFrameId) {
+      cancelAnimationFrame(animationFrameId);
+      animationFrameId = null;
+    }
+
+    const start = performance.now();
+
+    const step = (now) => {
+      const t = clamp((now - start) / durationMs, 0, 1);
+      const eased = 1 - Math.pow(1 - t, 3);
+      revealWidth = clamp(from + (to - from) * eased, 0, totalLineLength);
+
+      if (t >= 1) {
+        animationFrameId = null;
+        return;
+      }
+
+      animationFrameId = requestAnimationFrame(step);
+    };
+
+    animationFrameId = requestAnimationFrame(step);
+  }
+
   function handleWheel(event) {
     if (!app) return;
 
     event.preventDefault();
     app.scrollLeft += event.deltaY;
     userHasScrolled = true;
+    completionDone = false;
     stopAutoReveal();
     stopCompletion();
     syncRevealFromScroll();
