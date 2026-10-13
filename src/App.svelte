@@ -1,214 +1,14 @@
 <script>
   import { onMount } from "svelte";
-
-  const lineConfig = {
-    revealRatio: 2 / 3,
-    initialRevealDelayMs: 250,
-    initialRevealDurationMs: 1200,
-    completionDurationMs: 800,
-    shrinkDurationMs: 400,
-  };
-
-  const totalLineLength = 7000;
+  import { linePath } from "./linePath.js";
 
   let app;
-  let revealWidth = 0;
-  let thresholdWidth = 0;
-  let autoRevealActive = false;
-  let completionActive = false;
-  let completionDone = false;
-  let userHasScrolled = false;
-  let animationFrameId = null;
-  let loadTimerId = null;
-
-  function clamp(value, min, max) {
-    return Math.min(Math.max(value, min), max);
-  }
-
-  function updateThreshold() {
-    const viewportWidth = app ? app.clientWidth : window.innerWidth;
-    thresholdWidth = viewportWidth * lineConfig.revealRatio;
-
-    if (completionDone) {
-      revealWidth = totalLineLength;
-      return;
-    }
-
-    if (!userHasScrolled && !autoRevealActive) {
-      revealWidth = clamp(thresholdWidth, 0, totalLineLength);
-    }
-  }
-
-  function syncRevealFromScroll() {
-    if (!app || completionActive) return;
-
-    const atScrollEnd = app.scrollLeft + app.clientWidth >= app.scrollWidth - 1;
-    if (completionDone && !atScrollEnd) {
-      completionDone = false;
-    }
-
-    if (atScrollEnd) {
-      const startValue = clamp(
-        revealWidth || thresholdWidth,
-        0,
-        totalLineLength,
-      );
-      if (startValue < totalLineLength) {
-        stopAutoReveal();
-        beginCompletionAnimation(startValue);
-      }
-      return;
-    }
-
-    const targetReveal = clamp(
-      app.scrollLeft + thresholdWidth,
-      0,
-      totalLineLength,
-    );
-
-    // If the reveal needs to shrink (reverse scroll), animate the transition
-    if (targetReveal < revealWidth) {
-      beginRevealTransition(targetReveal);
-    } else {
-      // Growing reveal follows scroll position immediately
-      revealWidth = clamp(targetReveal, 0, totalLineLength);
-    }
-  }
-
-  function stopAutoReveal() {
-    autoRevealActive = false;
-
-    if (animationFrameId) {
-      cancelAnimationFrame(animationFrameId);
-      animationFrameId = null;
-    }
-  }
-
-  function stopCompletion() {
-    completionActive = false;
-    if (animationFrameId) {
-      cancelAnimationFrame(animationFrameId);
-      animationFrameId = null;
-    }
-  }
-
-  function beginInitialReveal() {
-    if (!app || userHasScrolled) return;
-
-    autoRevealActive = true;
-    const startTime = performance.now();
-
-    const animate = (now) => {
-      if (!autoRevealActive) return;
-
-      const progress = clamp(
-        (now - startTime) / lineConfig.initialRevealDurationMs,
-        0,
-        1,
-      );
-
-      revealWidth = clamp(thresholdWidth * progress, 0, totalLineLength);
-
-      if (progress >= 1) {
-        stopAutoReveal();
-        revealWidth = clamp(thresholdWidth, 0, totalLineLength);
-        return;
-      }
-
-      animationFrameId = requestAnimationFrame(animate);
-    };
-
-    animationFrameId = requestAnimationFrame(animate);
-  }
-
-  function beginCompletionAnimation(startValue) {
-    if (completionDone || completionActive) return;
-
-    const from = clamp(startValue ?? thresholdWidth, 0, totalLineLength);
-    completionActive = true;
-    const start = performance.now();
-    const to = totalLineLength;
-    const duration = lineConfig.completionDurationMs;
-
-    const step = (now) => {
-      if (!completionActive) return;
-
-      const t = clamp((now - start) / duration, 0, 1);
-      const eased = 1 - Math.pow(1 - t, 3);
-      revealWidth = clamp(from + (to - from) * eased, 0, totalLineLength);
-
-      if (t >= 1) {
-        completionActive = false;
-        completionDone = true;
-        revealWidth = totalLineLength;
-        animationFrameId = null;
-        return;
-      }
-
-      animationFrameId = requestAnimationFrame(step);
-    };
-
-    if (animationFrameId) {
-      cancelAnimationFrame(animationFrameId);
-    }
-    animationFrameId = requestAnimationFrame(step);
-  }
-
-  function beginRevealTransition(
-    toValue,
-    durationMs = lineConfig.shrinkDurationMs,
-  ) {
-    const from = clamp(revealWidth ?? 0, 0, totalLineLength);
-    const to = clamp(toValue, 0, totalLineLength);
-
-    if (from === to) return;
-
-    if (animationFrameId) {
-      cancelAnimationFrame(animationFrameId);
-      animationFrameId = null;
-    }
-
-    const start = performance.now();
-
-    const step = (now) => {
-      const t = clamp((now - start) / durationMs, 0, 1);
-      const eased = 1 - Math.pow(1 - t, 3);
-      revealWidth = clamp(from + (to - from) * eased, 0, totalLineLength);
-
-      if (t >= 1) {
-        animationFrameId = null;
-        return;
-      }
-
-      animationFrameId = requestAnimationFrame(step);
-    };
-
-    animationFrameId = requestAnimationFrame(step);
-  }
 
   function handleWheel(event) {
     if (!app) return;
 
     event.preventDefault();
     app.scrollLeft += event.deltaY;
-    userHasScrolled = true;
-    completionDone = false;
-    stopAutoReveal();
-    stopCompletion();
-    syncRevealFromScroll();
-  }
-
-  function handleScroll() {
-    if (!app) return;
-    syncRevealFromScroll();
-  }
-
-  function handleResize() {
-    updateThreshold();
-
-    if (app) {
-      syncRevealFromScroll();
-    }
   }
 
   onMount(() => {
@@ -221,38 +21,21 @@
     if (app) {
       app.scrollLeft = 0;
     }
-
-    updateThreshold();
-
-    loadTimerId = window.setTimeout(() => {
-      beginInitialReveal();
-    }, lineConfig.initialRevealDelayMs);
-
-    window.addEventListener("resize", handleResize);
-
-    return () => {
-      window.clearTimeout(loadTimerId);
-      stopAutoReveal();
-      window.removeEventListener("resize", handleResize);
-    };
   });
 </script>
 
-<div
-  class="app"
-  bind:this={app}
-  on:wheel={handleWheel}
-  on:scroll={handleScroll}
->
-  <div class="line-viewport" aria-label="Scrollable line reveal section">
-    <div
-      class="line-track"
-      style="--reveal-width: {revealWidth}px; --line-length: {totalLineLength}px;"
+<div class="app" bind:this={app} on:wheel={handleWheel}>
+  <div class="line-viewport" aria-label="Centered custom path section">
+    <svg
+      class="line-svg"
+      viewBox="0 0 5637 600"
+      preserveAspectRatio="xMidYMid meet"
+      aria-label="Custom path"
     >
-      <span class="marker start" aria-hidden="true"></span>
-      <div class="line" aria-label="Horizontal line"></div>
-    </div>
-    <span class="marker end" aria-hidden="true"></span>
+      <circle class="start-marker" cx="0" cy="297.206" r="6" />
+      <circle class="end-marker" cx="5637" cy="299.206" r="6" />
+      <path class="line-path" d={linePath} />
+    </svg>
   </div>
 </div>
 
@@ -270,58 +53,46 @@
   }
 
   .app {
-    position: relative;
-    width: 100%;
-    min-height: 100vh;
-    display: flex;
-    align-items: center;
-    justify-content: flex-start;
+    width: 100vw;
+    height: 100vh;
     overflow-x: auto;
     overflow-y: hidden;
+    display: flex;
+    align-items: center;
     background: #f7f7f4;
+    scrollbar-width: none;
+  }
+
+  .app::-webkit-scrollbar {
+    display: none;
   }
 
   .line-viewport {
-    position: relative;
     display: flex;
     align-items: center;
+    justify-content: flex-start;
     width: max-content;
     min-width: 100vw;
-    padding-left: 24px;
+    height: 100vh;
   }
 
-  .line-track {
-    position: relative;
-    display: flex;
-    align-items: center;
-    width: var(--line-length, 7000px);
-    min-width: var(--line-length, 7000px);
-    clip-path: inset(0 calc(100% - var(--reveal-width, 0px)) 0 0);
-    will-change: transform;
-  }
-
-  .marker {
-    width: 12px;
-    height: 12px;
-    border-radius: 50%;
-    background: #111;
+  .line-svg {
     display: block;
-    flex-shrink: 0;
-    z-index: 2;
+    width: 5637px;
+    height: 600px;
+    overflow: visible;
   }
 
-  .marker.end {
-    position: absolute;
-    left: calc(var(--line-length, 7000px) + 24px - 12px);
-    top: 50%;
-    transform: translateY(-50%);
+  .start-marker,
+  .end-marker {
+    fill: #111;
   }
 
-  .line {
-    width: var(--line-length, 7000px);
-    height: 3px;
-    background: #111;
-    display: block;
-    z-index: 1;
+  .line-path {
+    fill: none;
+    stroke: #111;
+    stroke-width: 3;
+    stroke-linecap: round;
+    vector-effect: non-scaling-stroke;
   }
 </style>
