@@ -35,3 +35,9 @@ Before making any code change, design choice, content decision, technical decisi
 ## Project-specific note
 
 This repository is a personal/about-me website. If the user has not provided exact personal details, wording, visuals, structure, or design direction, do not guess. Ask first, then proceed only after confirmation.
+
+## Styling rule
+
+- Always use rem units for text positioning and spacing related to text layout.
+- Do not use px for text positioning, line-height tied to text layout, or text-related spacing when rem is available.
+- Use rem-based sizing consistently for typography and text placement decisions.

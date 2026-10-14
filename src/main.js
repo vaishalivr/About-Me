@@ -1,3 +1,5 @@
-import { mount } from 'svelte';
-import App from './App.svelte';
-mount(App, { target: document.getElementById('app') });
+import { mount } from "svelte";
+import "./global.css";
+import App from "./App.svelte";
+
+mount(App, { target: document.getElementById("app") });
