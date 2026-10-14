@@ -2,7 +2,45 @@
   import { onMount } from "svelte";
   import { linePath } from "./linePath.js";
 
+  const prefixSegment = "1337 285.859";
+  const drawDelayMs = 300;
+  let drawDurationMs = 4000;
+  let pathElement;
   let app;
+  let animationFrameId = 0;
+  let delayTimerId = 0;
+  let stoppingDistance = 0;
+  let totalLength = 0;
+
+  function measurePathLength(pathData) {
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+
+    path.setAttribute("d", pathData);
+    svg.style.position = "absolute";
+    svg.style.visibility = "hidden";
+    svg.style.width = "0";
+    svg.style.height = "0";
+    svg.style.overflow = "hidden";
+    svg.appendChild(path);
+    document.body.appendChild(svg);
+
+    const length = path.getTotalLength();
+    svg.remove();
+
+    return length;
+  }
+
+  function buildPrefixPath() {
+    const segmentIndex = linePath.indexOf(prefixSegment);
+
+    if (segmentIndex === -1) {
+      return linePath;
+    }
+
+    return linePath.slice(0, segmentIndex + prefixSegment.length);
+  }
+
   const accentCards = [
     { x: 1705, y: 150, label: "newsrooms" },
     { x: 1865, y: 150, label: "non-profts/foundations" },
@@ -64,6 +102,73 @@
     if (app) {
       app.scrollLeft = 0;
     }
+
+    totalLength = measurePathLength(linePath);
+    stoppingDistance = measurePathLength(buildPrefixPath());
+
+    if (!pathElement) {
+      return () => {
+        if (delayTimerId) {
+          window.clearTimeout(delayTimerId);
+        }
+        if (animationFrameId) {
+          window.cancelAnimationFrame(animationFrameId);
+        }
+      };
+    }
+
+    const prefersReducedMotion =
+      window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches ?? false;
+
+    if (prefersReducedMotion) {
+      pathElement.style.opacity = "1";
+      pathElement.style.strokeDasharray = `${totalLength} ${totalLength}`;
+      pathElement.style.strokeDashoffset = `${totalLength - stoppingDistance}`;
+      return () => {
+        if (delayTimerId) {
+          window.clearTimeout(delayTimerId);
+        }
+        if (animationFrameId) {
+          window.cancelAnimationFrame(animationFrameId);
+        }
+      };
+    }
+
+    pathElement.style.opacity = "0";
+    pathElement.style.strokeDasharray = `${totalLength} ${totalLength}`;
+    pathElement.style.strokeDashoffset = `${totalLength}`;
+
+    delayTimerId = window.setTimeout(() => {
+      pathElement.style.opacity = "1";
+
+      const startTimestamp = performance.now();
+
+      function updateStroke(offsetTimestamp) {
+        const elapsed = offsetTimestamp - startTimestamp;
+        const progress = Math.min(elapsed / drawDurationMs, 1);
+        const visibleLength = stoppingDistance * progress;
+
+        pathElement.style.strokeDashoffset = `${totalLength - visibleLength}`;
+
+        if (progress >= 1) {
+          pathElement.style.strokeDashoffset = `${totalLength - stoppingDistance}`;
+          return;
+        }
+
+        animationFrameId = window.requestAnimationFrame(updateStroke);
+      }
+
+      animationFrameId = window.requestAnimationFrame(updateStroke);
+    }, drawDelayMs);
+
+    return () => {
+      if (delayTimerId) {
+        window.clearTimeout(delayTimerId);
+      }
+      if (animationFrameId) {
+        window.cancelAnimationFrame(animationFrameId);
+      }
+    };
   });
 </script>
 
@@ -203,7 +308,7 @@
       <circle class="start-marker" cx="30" cy="297.206" r="6" />
       <circle class="end-marker" cx="5637" cy="299.206" r="6" />
       <!-- 2px difference -->
-      <path class="line-path" d={linePath} />
+      <path bind:this={pathElement} class="line-path" d={linePath} />
     </svg>
   </div>
 </div>
@@ -316,5 +421,8 @@
     stroke-width: 3;
     stroke-linecap: round;
     vector-effect: non-scaling-stroke;
+    opacity: 0;
+    stroke-dasharray: 0 1000000;
+    stroke-dashoffset: 1000000;
   }
 </style>
