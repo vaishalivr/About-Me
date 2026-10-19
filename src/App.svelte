@@ -1,14 +1,51 @@
 <script>
   import { onMount } from "svelte";
   import JourneyIllustration from "./JourneyIllustration.svelte";
+  import { scrollDistanceForFullReveal } from "./scrollConfig.js";
 
   let app;
+  let scrollProgress = 0;
+  let atScrollEnd = false;
+
+  function clamp(value, min, max) {
+    return Math.min(Math.max(value, min), max);
+  }
+
+  function getRevealScrollDistance() {
+    if (!app) {
+      return scrollDistanceForFullReveal;
+    }
+
+    return Math.max(
+      scrollDistanceForFullReveal,
+      app.scrollWidth - app.clientWidth,
+    );
+  }
+
+  function updateScrollProgress() {
+    if (!app) {
+      return;
+    }
+
+    const revealScrollDistance = getRevealScrollDistance();
+    const maxScrollLeft = app.scrollWidth - app.clientWidth;
+
+    scrollProgress = clamp(app.scrollLeft / revealScrollDistance, 0, 1);
+    atScrollEnd = maxScrollLeft > 0 && app.scrollLeft >= maxScrollLeft - 1;
+  }
 
   function handleWheel(event) {
     if (!app) return;
 
+    const revealScrollDistance = getRevealScrollDistance();
+
     event.preventDefault();
-    app.scrollLeft += event.deltaY;
+    app.scrollLeft = clamp(
+      app.scrollLeft + event.deltaY,
+      0,
+      revealScrollDistance,
+    );
+    updateScrollProgress();
   }
 
   onMount(() => {
@@ -20,11 +57,17 @@
 
     if (app) {
       app.scrollLeft = 0;
+      scrollProgress = 0;
     }
   });
 </script>
 
-<div class="app" bind:this={app} on:wheel={handleWheel}>
+<div
+  class="app"
+  bind:this={app}
+  on:wheel={handleWheel}
+  on:scroll={updateScrollProgress}
+>
   <div class="name-label" aria-label="Name">
     <span>Vaishali</span>
     <span>Verma</span>
@@ -35,7 +78,7 @@
     <span>Me</span>
   </div>
 
-  <JourneyIllustration />
+  <JourneyIllustration {scrollProgress} {atScrollEnd} />
 </div>
 
 <style>
@@ -87,19 +130,4 @@
     font-weight: 700;
   }
 
-  .thoughts-label {
-    fill: #111;
-    font-size: 1.1rem;
-    line-height: 1.5;
-    letter-spacing: 0.08em;
-    font-weight: 500;
-  }
-
-  .scribble-caption {
-    fill: #111;
-    font-size: 1.2rem;
-    line-height: 1.5;
-    letter-spacing: 0.04em;
-    font-weight: 500;
-  }
 </style>
