@@ -2,26 +2,48 @@
   import { onMount } from "svelte";
   import { linePath } from "./linePath.js";
   import { accentCards, timelineMarkers } from "./content.js";
-  import { getPathMetrics, setupPathDraw } from "./pathAnimation.js";
+  import {
+    getPathMetrics,
+    setPathReveal,
+    setupPathDraw,
+  } from "./pathAnimation.js";
+  import { totalHorizontalSceneTravel } from "./scrollConfig.js";
+
+  export let scrollProgress = 0;
+  export let atScrollEnd = false;
 
   const { totalLength, stoppingDistance } = getPathMetrics();
   let pathElement;
-  let cleanupDraw = () => {};
+  let initialDrawComplete = false;
 
-  onMount(() => {
-    cleanupDraw = setupPathDraw(pathElement, {
+  $: if (pathElement && initialDrawComplete) {
+    setPathReveal(pathElement, {
       totalLength,
       stoppingDistance,
-      durationMs: 4000,
+      revealProgress: scrollProgress,
+      atScrollEnd,
     });
+  }
 
-    return () => cleanupDraw();
+  $: sceneTranslateX = -(scrollProgress * totalHorizontalSceneTravel).toFixed(
+    2,
+  );
+
+  onMount(() => {
+    return setupPathDraw(pathElement, {
+      totalLength,
+      stoppingDistance,
+      onComplete: () => {
+        initialDrawComplete = true;
+      },
+    });
   });
 </script>
 
 <div class="line-viewport" aria-label="Centered custom path section">
   <svg
     class="line-svg"
+    style={`transform: translateX(${sceneTranslateX}px);`}
     viewBox="0 0 5637 600"
     preserveAspectRatio="xMidYMid meet"
     aria-label="Custom path"

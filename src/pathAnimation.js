@@ -1,7 +1,12 @@
 import { linePath } from "./linePath.js";
+import {
+  drawDelayMs,
+  initialDrawDurationMs,
+  prefixSegment,
+  finalRevealDurationMs,
+} from "./scrollConfig.js";
 
-export const prefixSegment = "1337 285.859";
-export const drawDelayMs = 300;
+export { prefixSegment, drawDelayMs } from "./scrollConfig.js";
 export const reducedMotionQuery = "(prefers-reduced-motion: reduce)";
 
 function measurePathLength(pathData) {
@@ -31,12 +36,122 @@ export function getPathMetrics() {
       ? totalLength
       : measurePathLength(linePath.slice(0, prefixEnd + prefixSegment.length));
 
-  return { totalLength, stoppingDistance };
+  return {
+    totalLength,
+    stoppingDistance,
+  };
+}
+
+function getCurrentVisibleLength(pathElement, totalLength) {
+  const currentOffset = Number.parseFloat(
+    pathElement.style.strokeDashoffset ?? `${totalLength}`,
+  );
+
+  if (!Number.isFinite(currentOffset)) {
+    return totalLength;
+  }
+
+  return totalLength - currentOffset;
+}
+
+function cancelCompletionAnimation(pathElement) {
+  if (!pathElement || !pathElement.__finalRevealFrameId) {
+    return;
+  }
+
+  window.cancelAnimationFrame(pathElement.__finalRevealFrameId);
+  pathElement.__finalRevealFrameId = 0;
+  pathElement.__finalRevealInProgress = false;
+}
+
+function beginAutoRevealToEnd(
+  pathElement,
+  { totalLength, startLength, durationMs = finalRevealDurationMs } = {},
+) {
+  if (!pathElement) {
+    return;
+  }
+
+  cancelCompletionAnimation(pathElement);
+
+  const startVisibleLength = clamp(startLength ?? totalLength, 0, totalLength);
+  const startTimestamp = performance.now();
+
+  pathElement.style.opacity = "1";
+  pathElement.style.strokeDasharray = `${totalLength} ${totalLength}`;
+
+  function updateStroke(offsetTimestamp) {
+    const elapsed = offsetTimestamp - startTimestamp;
+    const progress = Math.min(elapsed / durationMs, 1);
+    const visibleLength =
+      startVisibleLength + (totalLength - startVisibleLength) * progress;
+
+    pathElement.style.strokeDashoffset = `${totalLength - visibleLength}`;
+
+    if (progress >= 1) {
+      pathElement.style.strokeDashoffset = "0";
+      pathElement.__finalRevealFrameId = 0;
+      pathElement.__finalRevealInProgress = false;
+      return;
+    }
+
+    pathElement.__finalRevealFrameId =
+      window.requestAnimationFrame(updateStroke);
+  }
+
+  pathElement.__finalRevealInProgress = true;
+  pathElement.__finalRevealFrameId = window.requestAnimationFrame(updateStroke);
+}
+
+export function setPathReveal(
+  pathElement,
+  { totalLength, stoppingDistance, revealProgress = 0, atScrollEnd = false } = {},
+) {
+  if (!pathElement) {
+    return;
+  }
+
+  const currentVisibleLength = getCurrentVisibleLength(
+    pathElement,
+    totalLength,
+  );
+
+  if (revealProgress < 1 && !atScrollEnd) {
+    cancelCompletionAnimation(pathElement);
+
+    const remainingLength = Math.max(0, totalLength - stoppingDistance);
+    const revealDistance = remainingLength * clamp(revealProgress, 0, 1);
+    const visibleLength = stoppingDistance + revealDistance;
+
+    pathElement.style.opacity = "1";
+    pathElement.style.strokeDasharray = `${totalLength} ${totalLength}`;
+    pathElement.style.strokeDashoffset = `${totalLength - visibleLength}`;
+    return;
+  }
+
+  if (currentVisibleLength >= totalLength - 0.5) {
+    cancelCompletionAnimation(pathElement);
+    pathElement.style.strokeDashoffset = "0";
+    return;
+  }
+
+  if (pathElement.__finalRevealInProgress) {
+    return;
+  }
+
+  beginAutoRevealToEnd(pathElement, {
+    totalLength,
+    startLength: currentVisibleLength,
+  });
+}
+
+function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
 }
 
 export function setupPathDraw(
   pathElement,
-  { totalLength, stoppingDistance, durationMs = 4000 } = {},
+  { totalLength, stoppingDistance, durationMs = initialDrawDurationMs, onComplete } = {},
 ) {
   const prefersReducedMotion =
     window.matchMedia?.(reducedMotionQuery)?.matches ?? false;
@@ -49,6 +164,7 @@ export function setupPathDraw(
     pathElement.style.opacity = "1";
     pathElement.style.strokeDasharray = `${totalLength} ${totalLength}`;
     pathElement.style.strokeDashoffset = `${totalLength - stoppingDistance}`;
+    onComplete?.();
     return () => {};
   }
 
@@ -73,6 +189,7 @@ export function setupPathDraw(
 
       if (progress >= 1) {
         pathElement.style.strokeDashoffset = `${totalLength - stoppingDistance}`;
+        onComplete?.();
         return;
       }
 
@@ -90,5 +207,7 @@ export function setupPathDraw(
     if (animationFrameId) {
       window.cancelAnimationFrame(animationFrameId);
     }
+
+    cancelCompletionAnimation(pathElement);
   };
 }
