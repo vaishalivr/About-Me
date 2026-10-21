@@ -68,15 +68,15 @@
   on:wheel={handleWheel}
   on:scroll={updateScrollProgress}
 >
-  <div class="name-label" aria-label="Name">
-    <span>Vaishali</span>
-    <span>Verma</span>
-  </div>
-
-  <div class="about-label" aria-label="About me section">
+  <div class="name-label" aria-label="About Me">
     <span>About</span>
     <span>Me</span>
   </div>
+
+  <!-- <div class="about-label" aria-label="About me section">
+    <span>About</span>
+    <span>Me</span>
+  </div> -->
 
   <JourneyIllustration {scrollProgress} {atScrollEnd} />
 </div>
@@ -129,5 +129,4 @@
     color: #111;
     font-weight: 700;
   }
-
 </style>
