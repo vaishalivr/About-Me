@@ -1,6 +1,7 @@
-import { linePath } from "./linePath.js";
+import { linePath, openingSegment } from "./linePath.js";
 import {
   drawDelayMs,
+  openingDrawDurationMs,
   initialDrawDurationMs,
   prefixSegment,
   finalRevealDurationMs,
@@ -255,28 +256,28 @@ export function setupPathDraw(
     return () => {};
   }
 
-  pathElement.style.opacity = "0";
+  pathElement.style.opacity = "1";
   pathElement.style.strokeDasharray = `${totalLength} ${totalLength}`;
   pathElement.style.strokeDashoffset = `${totalLength}`;
 
   let animationFrameId = 0;
   let timeoutId = 0;
 
-  timeoutId = window.setTimeout(() => {
-    pathElement.style.opacity = "1";
+  const openingLength = measurePathLength(openingSegment);
 
+  function drawSegment(startLength, targetLength, segmentDurationMs, complete) {
     const startTimestamp = performance.now();
 
     function updateStroke(offsetTimestamp) {
       const elapsed = offsetTimestamp - startTimestamp;
-      const progress = Math.min(elapsed / durationMs, 1);
-      const visibleLength = stoppingDistance * progress;
+      const progress = segmentDurationMs <= 0 ? 1 : Math.min(elapsed / segmentDurationMs, 1);
+      const visibleLength = startLength + (targetLength - startLength) * progress;
 
       pathElement.style.strokeDashoffset = `${totalLength - visibleLength}`;
 
       if (progress >= 1) {
-        pathElement.style.strokeDashoffset = `${totalLength - stoppingDistance}`;
-        onComplete?.();
+        pathElement.style.strokeDashoffset = `${totalLength - targetLength}`;
+        complete?.();
         return;
       }
 
@@ -284,7 +285,13 @@ export function setupPathDraw(
     }
 
     animationFrameId = window.requestAnimationFrame(updateStroke);
-  }, drawDelayMs);
+  }
+
+  drawSegment(0, openingLength, openingDrawDurationMs, () => {
+    timeoutId = window.setTimeout(() => {
+      drawSegment(openingLength, stoppingDistance, durationMs, onComplete);
+    }, drawDelayMs);
+  });
 
   return () => {
     if (timeoutId) {

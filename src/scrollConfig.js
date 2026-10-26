@@ -1,4 +1,7 @@
-// Wait before the initial scribble starts, in milliseconds. Use 0 for no delay.
+// Draw from the left edge to the starting circle before pausing.
+export const openingDrawDurationMs = 300;
+
+// Pause at the starting circle before the initial scribble, in milliseconds.
 export const drawDelayMs = 900;
 
 // Initial scribble duration in milliseconds. Lower values draw faster.
