@@ -1,7 +1,6 @@
 <script>
   import { onMount } from "svelte";
   import { linePath } from "./linePath.js";
-  import { accentCards, timelineMarkers } from "./content.js";
   import {
     getPathMetrics,
     setPathReveal,
@@ -49,120 +48,113 @@
     aria-label="Custom path"
   >
     <text class="thoughts-label" x="720" y="30"
-      >These are my thoughts on design...</text
+      >and these are my thoughts when i see a design brief</text
     >
-    {#each accentCards as card}
-      <g>
-        <rect
-          class="accent-card"
-          x={card.x}
-          y={card.y}
-          width="100"
-          height="100"
-          rx="12"
-          ry="12"
-        />
-        <text
-          class="card-label"
-          x={card.x + 50}
-          y={card.y + 56}
-          text-anchor="middle"
-        >
-          {card.label}
-        </text>
-      </g>
-    {/each}
-    <text class="thoughts-label" x="1750" y="500"
-      >...that people of the real world would want!</text
-    >
-    <text class="scribble-caption" x="2500" y="90">I use...</text>
 
-    <text class="scribble-caption" x="2700" y="120">figma</text>
-    <text class="scribble-caption" x="2800" y="120">python</text>
-    <text class="scribble-caption" x="2900" y="120">D3.js</text>
-    <text class="scribble-caption" x="3000" y="120">svelte</text>
-
-    <text class="scribble-caption" x="2700" y="450">figma AI</text>
-    <text class="scribble-caption" x="2800" y="450">codex</text>
-    <text class="scribble-caption" x="2900" y="450">claude code</text>
-    <text class="scribble-caption" x="3050" y="450">jev</text>
-
-    <text class="scribble-caption" x="2700" y="500"
-      >to test, iterate and bring ideas to life.</text
-    >
-    <text class="scribble-caption" x="3300" y="90">I like....</text>
-    <text class="scribble-caption" x="3900" y="90">I like my work too...</text>
-    {#each timelineMarkers as marker}
-      <circle cx={marker.x} cy="299.206" r="6" fill="#111" />
-      {#each marker.lines as line, index}
-        <text
-          class="scribble-caption"
-          x={marker.textX}
-          y={marker.baseY + index * 18}
-        >
-          {line}
-        </text>
-      {/each}
-    {/each}
-
-    <g>
-      <rect
-        class="accent-card"
-        x="3300"
-        y="150"
-        width="100"
-        height="100"
-        rx="12"
-        ry="12"
-      />
-      <text class="card-label" x="3350" y="206" text-anchor="middle">
-        reading
-      </text>
-
-      <rect
-        class="accent-card"
-        x="3460"
-        y="150"
-        width="100"
-        height="100"
-        rx="12"
-        ry="12"
-      />
-      <text class="card-label" x="3510" y="206" text-anchor="middle">
-        cooking
-      </text>
-
-      <rect
-        class="accent-card"
-        x="3300"
-        y="350"
-        width="100"
-        height="100"
-        rx="12"
-        ry="12"
-      />
-      <text class="card-label" x="3350" y="406" text-anchor="middle">
-        coding
-      </text>
-
-      <rect
-        class="accent-card"
-        x="3460"
-        y="350"
-        width="100"
-        height="100"
-        rx="12"
-        ry="12"
-      />
-      <text class="card-label" x="3510" y="406" text-anchor="middle">
-        AIing
+    <g transform="translate(30 297.206)">
+      <text
+        class="scribble-caption"
+        dy="-1.375rem"
+        dominant-baseline="text-after-edge"
+      >Hi, I'm</text>
+      <text
+        class="scribble-caption"
+        dy="1.375rem"
+        dominant-baseline="text-before-edge"
+      >Vaishali</text>
+    </g>
+    <circle class="start-marker" cx="30" cy="297.206" r="6" />
+    <g transform="translate(1908 298.893)">
+      <circle class="start-marker" r="6" />
+      <text
+        class="scribble-caption"
+        dy="1.375rem"
+        dominant-baseline="text-before-edge"
+      >
+        <tspan x="0rem">because I do the thinking</tspan>
+        <tspan x="0rem" dy="1.8rem">without prompting.</tspan>
       </text>
     </g>
-
-    <text class="scribble-caption" x="750" y="650"
-      >— because creativity rarely follows a linear path.</text
-    >
-    <circle class="start-marker" cx="30" cy="297.206" r="6" />
+    <g transform="translate(2358 298.916)">
+      <circle class="start-marker" r="6" />
+      <text
+        class="scribble-caption"
+        dy="1.375rem"
+        dominant-baseline="text-before-edge"
+      >
+        <tspan x="0rem">and takes responsibility</tspan>
+        <tspan x="0rem" dy="1.8rem">for making the thing that works</tspan>
+        <tspan x="0rem" dy="1.8rem">• within your framework</tspan>
+        <tspan x="0rem" dy="1.8rem">• improves your product</tspan>
+        <tspan x="0rem" dy="1.8rem">• impacts your business outcomes</tspan>
+        <tspan x="0rem" dy="1.8rem">• gives a good RoI</tspan>
+      </text>
+    </g>
+    <g transform="translate(2808 298.939)">
+      <circle class="start-marker" r="6" />
+      <text
+        class="scribble-caption"
+        dy="1.375rem"
+        dominant-baseline="text-before-edge"
+      >
+        <tspan x="0rem">I analyse your data and</tspan>
+        <tspan x="0rem" dy="1.8rem">sketch out a design that</tspan>
+        <tspan x="0rem" dy="1.8rem">will work to solve your problem</tspan>
+      </text>
+    </g>
+    <g transform="translate(3258 298.962)">
+      <circle class="start-marker" r="6" />
+      <text
+        class="scribble-caption"
+        dy="1.375rem"
+        dominant-baseline="text-before-edge"
+      >
+        <tspan x="0rem">design is the major skill</tspan>
+        <tspan x="0rem" dy="1.8rem">along with data analysis</tspan>
+        <tspan x="0rem" dy="1.8rem">and writing code</tspan>
+      </text>
+    </g>
+    <g transform="translate(3708 298.984)">
+      <circle class="start-marker" r="6" />
+      <text
+        class="scribble-caption"
+        dy="1.375rem"
+        dominant-baseline="text-before-edge"
+      >
+        <tspan x="0rem">my work fits well within</tspan>
+        <tspan x="0rem" dy="1.8rem">these agencies:</tspan>
+        <tspan x="0rem" dy="1.8rem">• newsrooms/publications</tspan>
+        <tspan x="0rem" dy="1.8rem">• non-profits/foundations</tspan>
+        <tspan x="0rem" dy="1.8rem">• research institutions</tspan>
+        <tspan x="0rem" dy="1.8rem">• early stage startups</tspan>
+        <tspan x="0rem" dy="1.8rem">• creative agencies</tspan>
+        <tspan x="0rem" dy="1.8rem">• design teams</tspan>
+        <tspan x="0rem" dy="1.8rem">but not limited to these</tspan>
+      </text>
+    </g>
+    <g transform="translate(4158 299.007)">
+      <circle class="start-marker" r="6" />
+      <text
+        class="scribble-caption"
+        dy="1.375rem"
+        dominant-baseline="text-before-edge"
+      >
+        <tspan x="0rem">In the past I have been:</tspan>
+        <tspan x="0rem" dy="1.8rem">• architect</tspan>
+        <tspan x="0rem" dy="1.8rem">• design coordinator</tspan>
+        <tspan x="0rem" dy="1.8rem">• freelance content designer</tspan>
+        <tspan x="0rem" dy="1.8rem">• freelance information designer</tspan>
+        <tspan x="0rem" dy="1.8rem">• data visualization developer</tspan>
+        <tspan x="0rem" dy="1.8rem">• data visualization designer and developer</tspan>
+        <tspan x="0rem" dy="1.8rem">• back to freelancing again</tspan>
+      </text>
+    </g>
+    <g class="venn-diagram" role="img" aria-label="Three overlapping circles with a fourth circle in the center">
+      <circle cx="5290" cy="210" r="105" />
+      <circle cx="5213" cy="344" r="105" />
+      <circle cx="5367" cy="344" r="105" />
+      <circle cx="5290" cy="299.206" r="65" />
+    </g>
     <circle class="end-marker" cx="5637" cy="299.206" r="6" />
     <!-- 2px difference -->
     <path bind:this={pathElement} class="line-path" d={linePath} />
@@ -209,18 +201,11 @@
     fill: #111;
   }
 
-  .accent-card {
-    fill: #d9d9d9;
-    stroke: #000;
-    stroke-width: 1;
-  }
-
-  .card-label {
-    fill: #111;
-    font-size: 0.72rem;
-    letter-spacing: 0.03em;
-    font-weight: 600;
-    text-transform: lowercase;
+  .venn-diagram {
+    fill: none;
+    stroke: #111;
+    stroke-width: 2;
+    vector-effect: non-scaling-stroke;
   }
 
   .line-path {
