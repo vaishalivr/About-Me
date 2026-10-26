@@ -116,17 +116,4 @@
     font-weight: 700;
   }
 
-  .about-label {
-    position: absolute;
-    left: var(--about-label-offset);
-    bottom: var(--about-label-offset);
-    z-index: 2;
-    display: flex;
-    flex-direction: column;
-    font-size: 3rem;
-    line-height: 1.1;
-    letter-spacing: 0.02em;
-    color: #111;
-    font-weight: 700;
-  }
 </style>
