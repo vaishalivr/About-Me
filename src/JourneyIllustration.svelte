@@ -75,7 +75,7 @@
         <tspan x="0rem" dy="1.8rem">without prompting.</tspan>
       </text>
     </g>
-    <g transform="translate(2358 298.916)">
+    <g transform="translate(2408 298.919)">
       <circle class="start-marker" r="6" />
       <text
         class="scribble-caption"
@@ -90,7 +90,7 @@
         <tspan x="0rem" dy="1.8rem">• gives a good RoI</tspan>
       </text>
     </g>
-    <g transform="translate(2808 298.939)">
+    <g transform="translate(2908 298.944)">
       <circle class="start-marker" r="6" />
       <text
         class="scribble-caption"
@@ -102,7 +102,7 @@
         <tspan x="0rem" dy="1.8rem">will work to solve your problem</tspan>
       </text>
     </g>
-    <g transform="translate(3258 298.962)">
+    <g transform="translate(3408 298.969)">
       <circle class="start-marker" r="6" />
       <text
         class="scribble-caption"
@@ -114,7 +114,7 @@
         <tspan x="0rem" dy="1.8rem">and writing code</tspan>
       </text>
     </g>
-    <g transform="translate(3708 298.984)">
+    <g transform="translate(3908 298.995)">
       <circle class="start-marker" r="6" />
       <text
         class="scribble-caption"
@@ -132,7 +132,7 @@
         <tspan x="0rem" dy="1.8rem">but not limited to these</tspan>
       </text>
     </g>
-    <g transform="translate(4158 299.007)">
+    <g transform="translate(4408 299.02)">
       <circle class="start-marker" r="6" />
       <text
         class="scribble-caption"
@@ -149,11 +149,18 @@
         <tspan x="0rem" dy="1.8rem">• back to freelancing again</tspan>
       </text>
     </g>
-    <g class="venn-diagram" role="img" aria-label="Three overlapping circles with a fourth circle in the center">
-      <circle cx="5290" cy="210" r="105" />
-      <circle cx="5213" cy="344" r="105" />
-      <circle cx="5367" cy="344" r="105" />
-      <circle cx="5290" cy="299.206" r="65" />
+    <g transform="translate(5058 299.058)">
+      <circle class="start-marker" r="6" />
+      <text
+        class="scribble-caption"
+        dy="1.375rem"
+        dominant-baseline="text-before-edge"
+      >
+        <tspan x="0rem">About Me:</tspan>
+        <tspan x="0rem" dy="1.8rem">design</tspan>
+        <tspan x="0rem" dy="1.8rem">development</tspan>
+        <tspan x="0rem" dy="1.8rem">business</tspan>
+      </text>
     </g>
     <circle class="end-marker" cx="5637" cy="299.206" r="6" />
     <!-- 2px difference -->
@@ -199,13 +206,6 @@
   .start-marker,
   .end-marker {
     fill: #111;
-  }
-
-  .venn-diagram {
-    fill: none;
-    stroke: #111;
-    stroke-width: 2;
-    vector-effect: non-scaling-stroke;
   }
 
   .line-path {
