@@ -89,7 +89,6 @@
     overflow-y: hidden;
     display: flex;
     align-items: center;
-    background: #f7f7f4;
     scrollbar-width: none;
   }
 

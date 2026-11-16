@@ -8,7 +8,6 @@ import {
   startRetractionDurationMs,
 } from "./scrollConfig.js";
 
-export { prefixSegment, drawDelayMs } from "./scrollConfig.js";
 export const reducedMotionQuery = "(prefers-reduced-motion: reduce)";
 
 function measurePathLength(pathData) {

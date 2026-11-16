@@ -55,13 +55,13 @@
       <text
         class="scribble-caption"
         dy="-1.375rem"
-        dominant-baseline="text-after-edge"
-      >Hi, I'm</text>
+        dominant-baseline="text-after-edge">Hi, I'm</text
+      >
       <text
         class="scribble-caption"
         dy="1.375rem"
-        dominant-baseline="text-before-edge"
-      >Vaishali</text>
+        dominant-baseline="text-before-edge">Vaishali</text
+      >
     </g>
     <circle class="start-marker" cx="30" cy="297.206" r="6" />
     <g transform="translate(1908 298.893)">
@@ -145,7 +145,9 @@
         <tspan x="0rem" dy="1.8rem">• freelance content designer</tspan>
         <tspan x="0rem" dy="1.8rem">• freelance information designer</tspan>
         <tspan x="0rem" dy="1.8rem">• data visualization developer</tspan>
-        <tspan x="0rem" dy="1.8rem">• data visualization designer and developer</tspan>
+        <tspan x="0rem" dy="1.8rem"
+          >• data visualization designer and developer</tspan
+        >
         <tspan x="0rem" dy="1.8rem">• back to freelancing again</tspan>
       </text>
     </g>
@@ -183,7 +185,6 @@
     width: 5637px;
     height: 600px;
     overflow: visible;
-    border: 1px solid #000;
     box-sizing: border-box;
   }
 
